@@ -155,6 +155,9 @@ public class Client{
 	{
 	  //Init non-blocking RTPsocket that will be used to receive data
 	  try{
+		RTPsocket = new DatagramSocket(RTP_RCV_PORT);
+		RTPsocket.setSoTimeout(5); //5 milissegundos
+		
 	    //construct a new DatagramSocket to receive RTP packets from the server, on port RTP_RCV_PORT
 	    //RTPsocket = ...
 
