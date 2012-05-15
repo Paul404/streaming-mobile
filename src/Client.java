@@ -185,6 +185,8 @@ public class Client{
 	      //change RTSP state and print new state 
 	      //state = ....
 	      //System.out.println("New RTSP state: ....");
+		  state = READY;
+		  System.out.println("Novo estado RTSP: READY");
 	    }
 	}//else if state != INIT then do nothing
     }
@@ -399,10 +401,10 @@ public class Client{
       //otherwise, write the Session line from the RTSPid field
       //else ....
       if(request_type.equals("SETUP")) {
-    	  RTSPBufferedWriter.write("Transport: RTP/UDP; client_port= " + RTP_RCV_PORT);
+    	  RTSPBufferedWriter.write("Transport: RTP/UDP; client_port= " + RTP_RCV_PORT + CRLF);
       }
       else {
-    	  RTSPBufferedWriter.write("Session: " + RTSPid);
+    	  RTSPBufferedWriter.write("Session: " + RTSPid + CRLF);
       }
 
       RTSPBufferedWriter.flush();
