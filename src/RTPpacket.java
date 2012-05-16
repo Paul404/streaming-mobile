@@ -171,7 +171,6 @@ public class RTPpacket{
   public void printheader()
   {
     //TO DO: uncomment
-    /*
     for (int i=0; i < (HEADER_SIZE-4); i++)
       {
 	for (int j = 7; j>=0 ; j--)
@@ -183,7 +182,6 @@ public class RTPpacket{
       }
 
     System.out.println();
-    */
   }
 
   //return the unsigned value of 8-bit integer nb
