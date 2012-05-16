@@ -203,7 +203,7 @@ public class Client{
 	{
 	  //increase RTSP sequence number
 	  //.....
-
+      RTSPSeqNb++;
 
 	  //Send PLAY message to the server
 	  send_RTSP_request("PLAY");
@@ -216,6 +216,8 @@ public class Client{
 	      //change RTSP state and print out new state
 	      //.....
 	      // System.out.println("New RTSP state: ...")
+		  state = PLAYING;
+		  System.out.println("Novo estado RTP: PLAYING");
 
 	      //start the timer
 	      timer.start();
@@ -409,7 +411,7 @@ public class Client{
 
       RTSPBufferedWriter.flush();
       
-      RTSPSeqNb++;
+      //RTSPSeqNb++;
     }
     catch(Exception ex)
       {
