@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Streaming Android</string>
+    <string name="frames_enviados">Send #</string>
+    <string name="texto_porta">Configurar Porta</string>
+    <string name="botao_servidor">Iniciar/Parar</string>
+    <string name="titulo_log">Log:</string>
+    <string name="ultimo_log">Aguardando conexões</string>
+
+</resources>
