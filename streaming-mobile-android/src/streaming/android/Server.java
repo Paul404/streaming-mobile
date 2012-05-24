@@ -8,23 +8,24 @@ package streaming.android;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-public class Server{
+public class Server implements Runnable{
 
-	// RTP variables:
+	// Variaveis RTP:
 	// ----------------
-	DatagramSocket RTPsocket; // socket to be used to send and receive UDP
-								// packets
-	DatagramPacket senddp; // UDP packet containing the video frames
+	DatagramSocket RTPsocket; // socket pra ser usado pra enviar e receber pacotes UDP
+	DatagramPacket senddp; // pacote UDP contendo o frame do video
 
-	InetAddress ClientIPAddr; // Client IP address
-	int RTP_dest_port = 0; // destination port for RTP packets (given by the
-							// RTSP Client)
+	InetAddress ClientIPAddr; // endereço IP do cliente
+	int RTP_dest_port = 0; // porta de destino para pacotes RTP (obtido do cliente RTSP)
 
-	// Video variables:
+	// Variaveis do video:
 	// ----------------
-	int imagenb = 0; // image nb of the image currently transmitted
-	VideoStream video; // VideoStream object used to access video frames
+	int imagenb = 0; // numero da imagem enviada atualmente
+	VideoStream video; // objeto VideoStream object used to access video frames
 	static int MJPEG_TYPE = 26; // RTP payload type for MJPEG video
 	static int FRAME_PERIOD = 100; // Frame period of the video to stream, in ms
 	static int VIDEO_LENGTH = 500; // length of the video in frames
@@ -61,9 +62,12 @@ public class Server{
 	public Server() {
 
 		// init Timer
-		timer = new Timer(FRAME_PERIOD, this);
-		timer.setInitialDelay(0);
-		timer.setCoalesce(true);
+		//timer = new Timer(FRAME_PERIOD, this);
+		//timer.setInitialDelay(0);
+		//timer.setCoalesce(true);
+		
+		// Inicializa um temporizador
+		
 
 		// allocate memory for the sending buffer
 		buf = new byte[15000];
@@ -85,15 +89,15 @@ public class Server{
 	// ------------------------
 	// Handler for timer
 	// ------------------------
-	public void actionPerformed(ActionEvent e) {
+	public void run() {
 
-		// if the current image nb is less than the length of the video
+		// se o numero da imagem atual é menor que o tamanho do video
 		if (imagenb < VIDEO_LENGTH) {
-			// update current imagenb
+			// atualiza o numero da imagem atual
 			imagenb++;
 
 			try {
-				// get next frame to send from the video, as well as its size
+				// obtem o proximo frame do video, bem como seu tamanho
 				int image_length = video.getnextframe(buf);
 
 				// Builds an RTPpacket object containing the frame
@@ -119,13 +123,15 @@ public class Server{
 
 				// update GUI
 				label.setText("Send frame #" + imagenb);
-			} catch (Exception ex) {
-				System.out.println("Exception caught: " + ex);
+			} 
+			catch (Exception ex) {
+				System.out.println("Excecao detectada: " + ex);
 				System.exit(0);
 			}
-		} else {
-			// if we have reached the end of the video file, stop the timer
-			timer.stop();
+		}
+		else {
+			// para o temporizador quando chega no final do video
+			Thread.currentThread().stop();
 		}
 	}
 
@@ -202,82 +208,87 @@ public class Server{
 	}
 	
 	
-	public static void run(int porta) throws Exception {
+	public static void start(int porta) throws Exception {
 		// cria um objeto servidor
 		Server theServer = new Server();
 
 		// pega a porta definida pelo usuario
 		int RTSPport = porta;
 
-		// Initiate TCP connection with the client for the RTSP session
+		// Inicializa uma conexao TCP com cliente usando sessao RTSP
 		ServerSocket listenSocket = new ServerSocket(RTSPport);
 		theServer.RTSPsocket = listenSocket.accept();
 		listenSocket.close();
 
-		// Get Client IP address
+		// Pega o endereço IP do cliente
 		theServer.ClientIPAddr = theServer.RTSPsocket.getInetAddress();
 
-		// Initiate RTSPstate
+		// Inicializa o estado do RTP
 		state = INIT;
 
-		// Set input and output stream filters:
+		// Define streams de entrada e saida
 		RTSPBufferedReader = new BufferedReader(new InputStreamReader(theServer.RTSPsocket.getInputStream()));
 		RTSPBufferedWriter = new BufferedWriter(new OutputStreamWriter(theServer.RTSPsocket.getOutputStream()));
 
-		// Wait for the SETUP message from the client
+		// Aguarda por uma mensagem de SETUP do cliente
 		int request_type;
 		boolean done = false;
 		while (!done) {
-			request_type = theServer.parse_RTSP_request(); // blocking
+			request_type = theServer.parse_RTSP_request(); // bloqueado
 
 			if (request_type == SETUP) {
 				done = true;
 
-				// update RTSP state
+				// atualiza o estado do RTSP
 				state = READY;
-				System.out.println("New RTSP state: READY");
+				System.out.println("Novo estado RTSP: READY");
 
-				// Send response
+				// Envia uma resposta
 				theServer.send_RTSP_response();
 
-				// init the VideoStream object:
+				// Inicializa um objeto de VideoStream
 				theServer.video = new VideoStream(VideoFileName);
 
-				// init RTP socket
+				// Inicializa um socket RTP
 				theServer.RTPsocket = new DatagramSocket();
 			}
 		}
 
-		// loop to handle RTSP requests
+		ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+		
+		// laço para controlar requisições RTP
 		while (true) {
-			// parse the request
-			request_type = theServer.parse_RTSP_request(); // blocking
+			// reconhece o tipo de requisição
+			request_type = theServer.parse_RTSP_request(); // bloqueado
 
 			if ((request_type == PLAY) && (state == READY)) {
-				// send back response
+				// envia uma resposta de volta
 				theServer.send_RTSP_response();
-				// start timer
-				theServer.timer.start();
-				// update state
+				// inicia um temporizador
+				scheduler.scheduleAtFixedRate(theServer, 0, 50, TimeUnit.MILLISECONDS);
+				// atualiza o estado do RTSP
 				state = PLAYING;
-				System.out.println("New RTSP state: PLAYING");
-			} else if ((request_type == PAUSE) && (state == PLAYING)) {
-				// send back response
+				System.out.println("Novo estado RTSP: PLAYING");
+			}
+			else if ((request_type == PAUSE) && (state == PLAYING)) {
+				// envia uma resposta de volta
 				theServer.send_RTSP_response();
-				// stop timer
+				// para o temporizador
 				theServer.timer.stop();
-				// update state
+				// atualiza o estado do RTSP
 				state = READY;
-				System.out.println("New RTSP state: READY");
-			} else if (request_type == TEARDOWN) {
-				// send back response
+				System.out.println("Novo estado RTSP: READY");
+			}
+			else if (request_type == TEARDOWN) {
+				// envia uma resposta de volta
 				theServer.send_RTSP_response();
-				// stop timer
+				// para o temporizador
 				theServer.timer.stop();
-				// close sockets
+				// fecha os sockets
 				theServer.RTSPsocket.close();
 				theServer.RTPsocket.close();
-
+				
+				//encerra a aplicação
 				System.exit(0);
 			}
 		}
