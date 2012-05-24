@@ -73,17 +73,17 @@ public class Server implements Runnable{
 		buf = new byte[15000];
 
 		// Handler to close the main window
-		addWindowListener(new WindowAdapter() {
-			public void windowClosing(WindowEvent e) {
-				// stop the timer and exit
-				timer.stop();
-				System.exit(0);
-			}
-		});
+		//addWindowListener(new WindowAdapter() {
+		//	public void windowClosing(WindowEvent e) {
+		//		// stop the timer and exit
+		//		timer.stop();
+		//		System.exit(0);
+		//	}
+		//});
 
 		// GUI:
-		label = new JLabel("Send frame #        ", JLabel.CENTER);
-		getContentPane().add(label, BorderLayout.CENTER);
+		//label = new JLabel("Send frame #        ", JLabel.CENTER);
+		//getContentPane().add(label, BorderLayout.CENTER);
 	}
 
 	// ------------------------
@@ -122,7 +122,9 @@ public class Server implements Runnable{
 				rtp_packet.printheader();
 
 				// update GUI
-				label.setText("Send frame #" + imagenb);
+				//label.setText("Send frame #" + imagenb);
+				//TODO: alterar o label da view
+				System.out.println("Send frame #" + imagenb);
 			} 
 			catch (Exception ex) {
 				System.out.println("Excecao detectada: " + ex);
@@ -265,7 +267,7 @@ public class Server implements Runnable{
 				// envia uma resposta de volta
 				theServer.send_RTSP_response();
 				// inicia um temporizador
-				scheduler.scheduleAtFixedRate(theServer, 0, 50, TimeUnit.MILLISECONDS);
+				scheduler.scheduleAtFixedRate(theServer, 0, FRAME_PERIOD, TimeUnit.MILLISECONDS);
 				// atualiza o estado do RTSP
 				state = PLAYING;
 				System.out.println("Novo estado RTSP: PLAYING");
@@ -274,7 +276,8 @@ public class Server implements Runnable{
 				// envia uma resposta de volta
 				theServer.send_RTSP_response();
 				// para o temporizador
-				theServer.timer.stop();
+				//theServer.timer.stop();
+				scheduler.shutdown();
 				// atualiza o estado do RTSP
 				state = READY;
 				System.out.println("Novo estado RTSP: READY");
@@ -283,7 +286,8 @@ public class Server implements Runnable{
 				// envia uma resposta de volta
 				theServer.send_RTSP_response();
 				// para o temporizador
-				theServer.timer.stop();
+				//theServer.timer.stop();
+				scheduler.shutdownNow();
 				// fecha os sockets
 				theServer.RTSPsocket.close();
 				theServer.RTPsocket.close();
