@@ -214,7 +214,7 @@ public class Server implements Runnable{
 	}
 	
 	
-	public static void start(int porta, Activity ac) throws Exception {
+	public static void start(int porta, StreamingMobileAndroidActivity ac) throws Exception {
 		// cria um objeto servidor
 		final Server theServer = new Server();
 
@@ -225,9 +225,6 @@ public class Server implements Runnable{
 		ServerSocket listenSocket = new ServerSocket(RTSPport);
 		theServer.RTSPsocket = listenSocket.accept();
 		listenSocket.close();
-		
-		TextView tlog = (TextView)ac.findViewById(R.id.texto_log);
-		
 
 		// Pega o endereço IP do cliente
 		theServer.ClientIPAddr = theServer.RTSPsocket.getInetAddress();
@@ -235,8 +232,8 @@ public class Server implements Runnable{
 		// Inicializa o estado do RTP
 		state = INIT;
 		
-		tlog.append(theServer.RTSPsocket.getInetAddress().getHostAddress() + "\n");
-		tlog.invalidate();
+		ac.log("IP do cliente: " + theServer.ClientIPAddr.getHostAddress() + "\n");
+		
 		//return;
 
 		

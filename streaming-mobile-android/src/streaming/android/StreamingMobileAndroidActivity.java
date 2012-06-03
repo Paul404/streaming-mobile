@@ -60,12 +60,13 @@ public class StreamingMobileAndroidActivity extends Activity {
         
     }
     
-    private void log(String mensagem) {
+    public void log(String mensagem) {
     	
     	TextView logText = (TextView)findViewById(R.id.texto_log);
         ScrollView scroll = (ScrollView)findViewById(R.id.scrollView1);
     	
     	logText.append(mensagem);
+    	//logText.invalidate();
     	scroll.smoothScrollTo(0, logText.getBottom());
     }
     
