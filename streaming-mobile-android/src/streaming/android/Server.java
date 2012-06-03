@@ -10,7 +10,11 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+
+import android.app.Activity;
+import android.widget.TextView;
 
 public class Server implements Runnable{
 
@@ -210,9 +214,9 @@ public class Server implements Runnable{
 	}
 	
 	
-	public static void start(int porta) throws Exception {
+	public static void start(int porta, Activity ac) throws Exception {
 		// cria um objeto servidor
-		Server theServer = new Server();
+		final Server theServer = new Server();
 
 		// pega a porta definida pelo usuario
 		int RTSPport = porta;
@@ -221,13 +225,21 @@ public class Server implements Runnable{
 		ServerSocket listenSocket = new ServerSocket(RTSPport);
 		theServer.RTSPsocket = listenSocket.accept();
 		listenSocket.close();
+		
+		TextView tlog = (TextView)ac.findViewById(R.id.texto_log);
+		
 
 		// Pega o endereço IP do cliente
 		theServer.ClientIPAddr = theServer.RTSPsocket.getInetAddress();
 
 		// Inicializa o estado do RTP
 		state = INIT;
+		
+		tlog.append(theServer.RTSPsocket.getInetAddress().getHostAddress() + "\n");
+		tlog.invalidate();
+		//return;
 
+		
 		// Define streams de entrada e saida
 		RTSPBufferedReader = new BufferedReader(new InputStreamReader(theServer.RTSPsocket.getInputStream()));
 		RTSPBufferedWriter = new BufferedWriter(new OutputStreamWriter(theServer.RTSPsocket.getOutputStream()));
@@ -240,7 +252,6 @@ public class Server implements Runnable{
 
 			if (request_type == SETUP) {
 				done = true;
-
 				// atualiza o estado do RTSP
 				state = READY;
 				System.out.println("Novo estado RTSP: READY");
@@ -249,53 +260,99 @@ public class Server implements Runnable{
 				theServer.send_RTSP_response();
 
 				// Inicializa um objeto de VideoStream
-				theServer.video = new VideoStream(VideoFileName);
+				try {
+					theServer.video = new VideoStream(VideoFileName);
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 
 				// Inicializa um socket RTP
-				theServer.RTPsocket = new DatagramSocket();
+				try {
+					theServer.RTPsocket = new DatagramSocket();
+				} catch (SocketException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		}
 
-		ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+		final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 		
 		// laço para controlar requisições RTP
-		while (true) {
-			// reconhece o tipo de requisição
-			request_type = theServer.parse_RTSP_request(); // bloqueado
-
-			if ((request_type == PLAY) && (state == READY)) {
-				// envia uma resposta de volta
-				theServer.send_RTSP_response();
-				// inicia um temporizador
-				scheduler.scheduleAtFixedRate(theServer, 0, FRAME_PERIOD, TimeUnit.MILLISECONDS);
-				// atualiza o estado do RTSP
-				state = PLAYING;
-				System.out.println("Novo estado RTSP: PLAYING");
-			}
-			else if ((request_type == PAUSE) && (state == PLAYING)) {
-				// envia uma resposta de volta
-				theServer.send_RTSP_response();
-				// para o temporizador
-				//theServer.timer.stop();
-				scheduler.shutdown();
-				// atualiza o estado do RTSP
-				state = READY;
-				System.out.println("Novo estado RTSP: READY");
-			}
-			else if (request_type == TEARDOWN) {
-				// envia uma resposta de volta
-				theServer.send_RTSP_response();
-				// para o temporizador
-				//theServer.timer.stop();
-				scheduler.shutdownNow();
-				// fecha os sockets
-				theServer.RTSPsocket.close();
-				theServer.RTPsocket.close();
+		//while (true) {
+		new Thread(new Runnable() {
+			
+			private ScheduledFuture sf;
+			
+			@Override
+			public void run() {
+					// TODO Auto-generated method stub
 				
-				//encerra a aplicação
-				System.exit(0);
+				//(while) {
+				//	
+				//}
+					
+				int request_type;
+			
+			    // reconhece o tipo de requisição
+				request_type = theServer.parse_RTSP_request(); // bloqueado
+				
+	
+				if ((request_type == PLAY) && (state == READY)) {
+					// envia uma resposta de volta
+					theServer.send_RTSP_response();
+					// inicia um temporizador
+					
+					sf = scheduler.scheduleAtFixedRate(theServer, 0, FRAME_PERIOD, TimeUnit.MILLISECONDS);
+					
+					// atualiza o estado do RTSP
+					state = PLAYING;
+					System.out.println("Novo estado RTSP: PLAYING");
+				}
+				else if ((request_type == PAUSE) && (state == PLAYING)) {
+					// envia uma resposta de volta
+					theServer.send_RTSP_response();
+					// para o temporizador
+					//theServer.timer.stop();
+					try {
+						//scheduler.awaitTermination(500, TimeUnit.MILLISECONDS);
+					    //theServer.wait();
+						sf.wait(500);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						//e.printStackTrace();
+					}
+					//scheduler.shutdown();
+					// atualiza o estado do RTSP
+					state = READY;
+					System.out.println("Novo estado RTSP: READY");
+				}
+				else if (request_type == TEARDOWN) {
+					// envia uma resposta de volta
+					theServer.send_RTSP_response();
+					// para o temporizador
+					//theServer.timer.stop();
+					//scheduler.shutdownNow();
+					
+					// fecha os sockets
+					try {
+						//theServer.wait();
+						sf.cancel(false);
+						theServer.RTSPsocket.close();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						//e.printStackTrace();
+					}
+					theServer.RTPsocket.close();
+					
+					//encerra a aplicação
+					System.exit(0);
+				}
 			}
-		}
+			
+		}).run();
+		
 	}
 
 }

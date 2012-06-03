@@ -3,6 +3,8 @@ package streaming.android;
 
 import java.io.*;
 
+import android.os.Environment;
+
 public class VideoStream {
 
 	FileInputStream fis; // video file
@@ -14,7 +16,7 @@ public class VideoStream {
 	public VideoStream(String filename) throws Exception {
 
 		// init variables
-		fis = new FileInputStream(filename);
+		fis = new FileInputStream(Environment.getExternalStorageDirectory().getAbsolutePath()+"/mjpeg/"+filename); //new FileInputStream(filename);
 		frame_nb = 0;
 	}
 
