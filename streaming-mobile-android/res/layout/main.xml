@@ -4,63 +4,22 @@
     android:layout_height="fill_parent"
     android:orientation="vertical" >
 
-    <TextView
-        android:id="@+id/texto_frame_enviado"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="40dp"
-        android:layout_marginTop="40dp"
-        android:text="@string/frames_enviados"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
-
-    <EditText
-        android:id="@+id/input_configurar_porta"
+    <Button
+        android:id="@+id/button1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="20dp"
         android:layout_marginRight="20dp"
-        android:ems="10"
-        android:hint="@string/texto_porta"
-        android:inputType="number" >
-
-        <requestFocus />
-    </EditText>
-
+        android:layout_marginTop="50dp"
+        android:text="Executar Servidor" />
+
     <Button
-        android:id="@+id/botao_servidor"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="20dp"
-        android:text="@string/botao_servidor" />
-
-    <TextView
-        android:id="@+id/texto_titulo_log"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="10dp"
-        android:layout_marginTop="20dp"
-        android:text="@string/titulo_log"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
-
-    <ScrollView
-        android:id="@+id/scrollView1"
+        android:id="@+id/button2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="0.30" >
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" >
-
-            <TextView
-                android:id="@+id/texto_log"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/ultimo_log" />
-
-        </LinearLayout>
-    </ScrollView>
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginTop="20dp"
+        android:text="Executar Cliente" />
 
 </LinearLayout>

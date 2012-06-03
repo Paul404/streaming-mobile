@@ -1,6 +1,7 @@
 package streaming.android;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -16,15 +17,41 @@ public class StreamingMobileAndroidActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
+        //setContentView(R.layout.main);
+        setContentView(R.layout.client);
         
-        final TextView logText = (TextView)findViewById(R.id.texto_log);
+        
+        //teste
+        final Button botaoSetup = (Button) findViewById(R.id.botao_setup);
+        botaoSetup.setOnClickListener(new View.OnClickListener() {
+        	@Override
+        	public void onClick(View v) {
+				final Dialog dialog = new Dialog(StreamingMobileAndroidActivity.this);
+				dialog.setContentView(R.layout.setup);
+				dialog.setTitle("Configurar");
+				
+				Button botaoCancelar = (Button) dialog.findViewById(R.id.botao_cancelar);
+				botaoCancelar.setOnClickListener(new View.OnClickListener() {
+					
+					@Override
+					public void onClick(View v) {
+						dialog.cancel();
+						
+					}
+				});
+				
+				dialog.show();
+			}
+		});
+        
+        
+        /*final TextView logText = (TextView)findViewById(R.id.texto_log);
         final Button button = (Button)findViewById(R.id.botao_servidor);
         final EditText portaText = (EditText)findViewById(R.id.input_configurar_porta);
-        final ScrollView scroll = (ScrollView)findViewById(R.id.scrollView1);
+        final ScrollView scroll = (ScrollView)findViewById(R.id.scrollView1);*/
         
 	
-        log("\nO IP do servidor Ž: " + this.getIpAddress() + "\n");
+        //log("\nO IP do servidor Ž: " + this.getIpAddress() + "\n");
         
         /*
         try {
@@ -35,7 +62,7 @@ public class StreamingMobileAndroidActivity extends Activity {
 		}
         */
         
-        final StreamingMobileAndroidActivity that = this;
+        /*final StreamingMobileAndroidActivity that = this;
         
         button.setOnClickListener(new View.OnClickListener() {
         	
@@ -56,7 +83,7 @@ public class StreamingMobileAndroidActivity extends Activity {
             	}
                 
             }
-        });
+        });*/
         
     }
     
