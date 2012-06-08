@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+    android:layout_width="fill_parent"
+
+    android:layout_height="fill_parent"
+
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/texto_frame_enviado"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="40dp"
+        android:layout_marginTop="40dp"
+        android:text="enviar frame #"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <EditText
+        android:id="@+id/input_configurar_porta"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:ems="10"
+        android:hint="Configurar porta"
+        android:inputType="number" >
+
+        <requestFocus />
+
+    </EditText>
+
+    <Button
+        android:id="@+id/botao_servidor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="20dp"
+        android:text="Iniciar/Parar" />
+
+    <TextView
+        android:id="@+id/Log:"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="20dp"
+        android:text="Log:"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <ScrollView
+
+        android:id="@+id/scrollView1"
+
+        android:layout_width="match_parent"
+
+        android:layout_height="wrap_content"
+
+        android:layout_weight="0.30" >
+
+
+
+        <LinearLayout
+
+            android:layout_width="match_parent"
+
+            android:layout_height="match_parent" >
+
+            <TextView
+                android:id="@+id/texto_log"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="aguardando conexões" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+
+
+</LinearLayout>
