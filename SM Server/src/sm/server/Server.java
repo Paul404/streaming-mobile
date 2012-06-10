@@ -28,7 +28,7 @@ public class Server implements Runnable {
 	int imagenb = 0; // numero da imagem enviada atualmente
 	VideoStream video; // objeto VideoStream object used to access video frames
 	static int MJPEG_TYPE = 26; // RTP payload type for MJPEG video
-	static int FRAME_PERIOD = 100; // Frame period of the video to stream, in ms
+	static int FRAME_PERIOD = 50; //100 // Frame period of the video to stream, in ms
 	static int VIDEO_LENGTH = 500; // length of the video in frames
 
 	Timer timer; // timer used to send the images at the video frame rate
@@ -56,6 +56,9 @@ public class Server implements Runnable {
 	int RTSPSeqNb = 0; // Sequence number of RTSP messages within the session
 
 	final static String CRLF = "\r\n";
+	
+	
+	public SMServerActivity ac;
 
 	// --------------------------------
 	// Constructor
@@ -123,6 +126,9 @@ public class Server implements Runnable {
 
 				// update GUI
 				// label.setText("Send frame #" + imagenb);
+				ac.currentFrame = imagenb;
+				ac.updateSendFrame();
+				
 				// TODO: alterar o label da view
 				System.out.println("Send frame #" + imagenb);
 			} catch (Exception ex) {
@@ -131,7 +137,7 @@ public class Server implements Runnable {
 			}
 		} else {
 			// para o temporizador quando chega no final do video
-			Thread.currentThread().stop();
+			//Thread.currentThread().stop();
 		}
 	}
 
@@ -210,6 +216,8 @@ public class Server implements Runnable {
 	public static void starta(int porta, SMServerActivity ac) throws Exception {
 		// cria um objeto servidor
 		final Server theServer = new Server();
+		
+		theServer.ac = ac;
 
 		// pega a porta definida pelo usuario
 		int RTSPport = porta;
@@ -267,6 +275,8 @@ public class Server implements Runnable {
 					e.printStackTrace();
 				}
 			}
+			
+			
 		}
 
 		final ScheduledExecutorService scheduler = Executors
@@ -276,7 +286,7 @@ public class Server implements Runnable {
 		// while (true) {
 		new Thread(new Runnable() {
 
-			// private ScheduledFuture sf;
+			private ScheduledFuture sf;
 
 			@Override
 			public void run() {
@@ -294,8 +304,10 @@ public class Server implements Runnable {
 						theServer.send_RTSP_response();
 						// inicia um temporizador
 
-						scheduler.scheduleAtFixedRate(theServer, 0,
+						sf = scheduler.scheduleAtFixedRate(theServer, 0,
 								FRAME_PERIOD, TimeUnit.MILLISECONDS);
+						
+						//scheduler.
 
 						// atualiza o estado do RTSP
 						state = PLAYING;
@@ -306,11 +318,13 @@ public class Server implements Runnable {
 						// para o temporizador
 						// theServer.timer.stop();
 						try {
-							scheduler.awaitTermination(500,
-									TimeUnit.MILLISECONDS);
+							//scheduler.awaitTermination(500,
+							//		TimeUnit.MILLISECONDS);
 							// theServer.wait();
 							// sf.wait(500);
-						} catch (InterruptedException e) {
+							sf.cancel(false);
+						} catch(Exception e) {
+						//catch (InterruptedException e) {
 							// TODO Auto-generated catch block
 							// e.printStackTrace();
 						}
