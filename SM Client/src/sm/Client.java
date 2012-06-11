@@ -48,7 +48,7 @@ public class Client {
 	// --------------------------
 	// Construtor
 	// --------------------------
-	/*public Client() {
+	public Client() {
 
 		// inicializa o  timporizador
 		// --------------------------
@@ -58,7 +58,7 @@ public class Client {
 
 		// alocar memória suficiente para o buffer usado para receber dados do servidor
 		buf = new byte[15000];
-	}*/
+	}
 
 	
 
@@ -78,7 +78,7 @@ public class Client {
 		// System.out.println("Setup Button pressed !");
 
 		if (state == INIT) {
-			/*try {
+			try {
 				RTPsocket = new DatagramSocket(RTP_RCV_PORT);
 				RTPsocket.setSoTimeout(5); // 5 milissegundos
 
@@ -109,13 +109,13 @@ public class Client {
 				// System.out.println("New RTSP state: ....");
 				state = READY;
 				System.out.println("Novo estado RTSP: READY");
-			}*/
+			}
 		}// else if state != INIT then do nothing
 	}
 
 	// Handler for Play button
 	// -----------------------
-/*	class playButtonListener implements ActionListener {
+	class playButtonListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
 
 			// System.out.println("Play Button pressed !");
@@ -337,6 +337,6 @@ public class Client {
 			System.out.println("Exception caught: " + ex);
 			System.exit(0);
 		}
-	}*/
+	}
 
 }// end of Class Client
