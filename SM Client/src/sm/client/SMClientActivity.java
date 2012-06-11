@@ -10,15 +10,10 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.StringTokenizer;
-import java.util.Timer;
 
-import sm.Client;
-import sm.client.R;
-import sm.client.SMClientActivity;
+
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
