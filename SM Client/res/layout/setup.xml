@@ -12,7 +12,8 @@
         android:layout_marginRight="10dp"
         android:layout_marginTop="10dp"
         android:ems="10"
-        android:hint="Servidor" >
+        android:hint="Servidor"
+        android:text="192.168.25.199" >
 
         <requestFocus />
     </EditText>
@@ -26,7 +27,8 @@
         android:layout_marginTop="10dp"
         android:ems="10"
         android:hint="Porta"
-        android:inputType="number" />
+        android:inputType="number"
+        android:text="8086" />
 
     <EditText
         android:id="@+id/label_arquivo"
@@ -36,7 +38,8 @@
         android:layout_marginRight="10dp"
         android:layout_marginTop="10dp"
         android:ems="10"
-        android:hint="Arquivo" />
+        android:hint="Arquivo"
+        android:text="movie.Mjpeg" />
 
     <LinearLayout
         android:layout_width="match_parent"

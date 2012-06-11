@@ -21,10 +21,12 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 
 public class SMClientActivity extends Activity implements Runnable {
@@ -37,7 +39,10 @@ public class SMClientActivity extends Activity implements Runnable {
 
 	byte[] buf; // buffer usado para armazenar dados recebidos do servidor
 
+	boolean running = true;
 	
+	Handler refresh;
+	Bitmap bm;
 	
 	// Variaveis RTSP:
 	// ----------------
@@ -69,6 +74,8 @@ public class SMClientActivity extends Activity implements Runnable {
     	super.onCreate(savedInstanceState);
         setContentView(R.layout.client);
         
+        refresh = new Handler(Looper.getMainLooper());
+        
         /*String imagefile ="/sdcard/DSC01576.JPG";
         ImageView image = (ImageView)findViewById(R.id.imagem_video);
         Bitmap bm = BitmapFactory.decodeFile(imagefile);
@@ -79,18 +86,7 @@ public class SMClientActivity extends Activity implements Runnable {
         
         
         final Thread updateView = new Thread(this);
-        
-        try {
-			RTSPsocket = new Socket("10.0.2.2", 8087);
-			System.out.println("Conectou!!!");
-		} catch (UnknownHostException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-        
+        updateView.start();
         
         
         // acao do botao setup
@@ -110,16 +106,19 @@ public class SMClientActivity extends Activity implements Runnable {
 						
 						try{
 							// IP e porta do servidor RTSP
-							EditText servidor = (EditText)findViewById(R.id.label_servidor);
+							EditText servidor = (EditText)dialog.findViewById(R.id.label_servidor);
 							InetAddress ServerIPAddr = InetAddress.getByName(servidor.getText().toString());
 							
-							EditText porta = (EditText)findViewById(R.id.label_porta);
+							EditText porta = (EditText)dialog.findViewById(R.id.label_porta);
 							int RTSP_server_port = Integer.parseInt(porta.getText().toString());
 							
 							// arquivo a ser requisitado
-							EditText arquivo = (EditText)findViewById(R.id.label_arquivo);
+							EditText arquivo = (EditText)dialog.findViewById(R.id.label_arquivo);
 							VideoFileName = arquivo.getText().toString();
 							
+							System.out.println("IP: " + ServerIPAddr);
+							System.out.println("Porta: " + RTSP_server_port);
+							System.out.println("File: " + VideoFileName);
 							
 							// Conexao TCP com o servidor para troca de mensagens RTSP
 					    	RTSPsocket = new Socket(ServerIPAddr, RTSP_server_port);
@@ -214,7 +213,9 @@ public class SMClientActivity extends Activity implements Runnable {
 						// start the timer
 						//timer.start();
 						//TODO: iniciar a Thread 
-						updateView.start();
+						running = true;
+						//updateView.start();
+						
 						
 					}
 				}// else if state != READY then do nothing
@@ -246,7 +247,8 @@ public class SMClientActivity extends Activity implements Runnable {
 						// stop the timer
 						//timer.stop();
 						//TODO: parar a thread
-						updateView.stop();
+						//updateView.stop();
+						//running = false;
 					}
 				}// else if state != PLAYING then do nothing
 			}
@@ -276,7 +278,8 @@ public class SMClientActivity extends Activity implements Runnable {
 					// stop the timer
 					//timer.stop();
 					//TODO: parar a thread
-					updateView.stop();
+					//updateView.stop();
+					//running = false;
 
 					// exit
 					System.exit(0);
@@ -362,7 +365,7 @@ public class SMClientActivity extends Activity implements Runnable {
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
-		while(true){
+		while(running){
 			// Construct a DatagramPacket to receive data from the UDP socket
 			rcvdp = new DatagramPacket(buf, buf.length);
 	
@@ -395,17 +398,41 @@ public class SMClientActivity extends Activity implements Runnable {
 				//icon = new ImageIcon(image);
 				//iconLabel.setIcon(icon);
 				//TODO: converter array de byte para bitmap
-		        ImageView image = (ImageView)findViewById(R.id.imagem_video);
-		        Bitmap bm = BitmapFactory.decodeByteArray(payload, 0, payload_length);
-		        image.setImageBitmap(bm);		
+		        //ImageView image = (ImageView)findViewById(R.id.imagem_video);
+		        bm = BitmapFactory.decodeByteArray(payload, 0, payload_length);
+		        
+		        updateImageView();
+		        
+		        System.out.println("Bitmap: " + bm);
+		        
+		        //image.setImageBitmap(bm);
+		        //image.invalidate();
+		        Thread.sleep(10);
 				
 			} catch (InterruptedIOException iioe) {
 				// System.out.println("Nothing to read");
 			} catch (IOException ioe) {
 				System.out.println("Exception caught: " + ioe);
 			}
+			catch(Exception e) {
+				System.out.println("Erro update: " + e.getMessage());
+			}
 		}
 	}
+	
+	
+	public void updateImageView() {
+    	
+    	refresh.post(new Runnable() {
+            public void run()
+            {
+            	ImageView image = (ImageView)findViewById(R.id.imagem_video);
+            	image.setImageBitmap(bm);
+            }
+        });
+    	
+    	
+    }	
     
     
 }
