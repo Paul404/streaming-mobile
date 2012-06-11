@@ -8,6 +8,9 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
+import java.util.StringTokenizer;
+import java.util.Timer;
 
 import sm.Client;
 import sm.client.R;
@@ -26,10 +29,40 @@ import android.widget.EditText;
 import android.widget.ImageView;
 
 
-public class SMClientActivity extends Activity {	
+public class SMClientActivity extends Activity {
 	
-	// objeto Client
-	Client theClient;
+	// Variaveis RTP:
+	// ----------------
+	DatagramPacket rcvdp; // pacote UDP recebido do servidor
+	DatagramSocket RTPsocket; // socket usado para enviar e receber pacotes UDP
+	static int RTP_RCV_PORT = 25000; // porta onde o cliente vai receber os pacotes RTP
+
+	byte[] buf; // buffer usado para armazenar dados recebidos do servidor
+
+	
+	
+	// Variaveis RTSP:
+	// ----------------
+	
+	// estados rtsp
+	final static int INIT = 0;
+	final static int READY = 1;
+	final static int PLAYING = 2;
+	static int state; // estado RTSP == INIT ou READY ou PLAYING
+	Socket RTSPsocket; // socket usado para enviar/receber mensagens RTSP
+	
+	// filtros de fluxo de entrada e saida
+	static BufferedReader RTSPBufferedReader;
+	static BufferedWriter RTSPBufferedWriter;
+	static String VideoFileName; // arquivo de video para solicitar ao servidor
+	int RTSPSeqNb = 0; // numero de sequencia mensagens RTSP dentro da sessao
+	int RTSPid = 0; // ID da sessao RTSP (obtida do servidor RTSP)
+
+	final static String CRLF = "\r\n";
+
+	// constantes de video:
+	// ------------------
+	static int MJPEG_TYPE = 26; // RTP payload type for MJPEG video
 	
     /** Called when the activity is first created. */
     @Override
@@ -43,9 +76,7 @@ public class SMClientActivity extends Activity {
         Bitmap bm = BitmapFactory.decodeFile(imagefile);
         image.setImageBitmap(bm);*/
         
-        
-        theClient = new Client();    	
-    	
+        buf = new byte[15000];   	
         
         
         // acao do botao setup
@@ -73,20 +104,48 @@ public class SMClientActivity extends Activity {
 							
 							// arquivo a ser requisitado
 							EditText arquivo = (EditText)findViewById(R.id.label_arquivo);
-							theClient.VideoFileName = arquivo.getText().toString();
+							VideoFileName = arquivo.getText().toString();
 							
 							
 							// Conexao TCP com o servidor para troca de mensagens RTSP
-					    	theClient.RTSPsocket = new Socket(ServerIPAddr, RTSP_server_port);
+					    	RTSPsocket = new Socket(ServerIPAddr, RTSP_server_port);
 					    	
 					    	// Set input and output stream filters:
-					    	theClient.RTSPBufferedReader = new BufferedReader(new InputStreamReader(
-					    			theClient.RTSPsocket.getInputStream()));
-					    	theClient.RTSPBufferedWriter = new BufferedWriter(new OutputStreamWriter(
-					    			theClient.RTSPsocket.getOutputStream()));
+					    	RTSPBufferedReader = new BufferedReader(new InputStreamReader(
+					    			RTSPsocket.getInputStream()));
+					    	RTSPBufferedWriter = new BufferedWriter(new OutputStreamWriter(
+					    			RTSPsocket.getOutputStream()));
 	
-					    	// init RTSP state:
-					    	theClient.state = theClient.INIT;
+					    	// estado inicial do RTSP:
+					    	state = INIT;
+					    	
+					    	if (state == INIT) {
+								try {
+									RTPsocket = new DatagramSocket(RTP_RCV_PORT);
+									RTPsocket.setSoTimeout(5); // 5 milissegundos
+
+								} catch (SocketException se) {
+									System.out.println("Socket exception: " + se);
+									System.exit(0);
+								}
+
+								// inicializa o numero de sequencial RTSP
+								RTSPSeqNb = 1;
+
+								// Send SETUP message to the server
+								send_RTSP_request("SETUP");
+
+								// Wait for the response
+								if (parse_server_response() != 200)
+									System.out.println("Invalid Server Response");
+								else {
+									// change RTSP state and print new state
+									// state = ....
+									// System.out.println("New RTSP state: ....");
+									state = READY;
+									System.out.println("Novo estado RTSP: READY");
+								}
+							}// else if state != INIT then do nothing
 						}
 						catch(Exception e){
 							//erro no setup
@@ -137,8 +196,81 @@ public class SMClientActivity extends Activity {
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
 			}
-		});
-        
-        
+		});        
     }
+    
+    
+    private void send_RTSP_request(String request_type) {
+		try {
+			// Use the RTSPBufferedWriter to write to the RTSP socket
+
+			// write the request line:
+			RTSPBufferedWriter.write(request_type + " " + VideoFileName
+					+ " RTSP/1.0" + CRLF);
+
+			// write the CSeq line:
+			// ......
+			RTSPBufferedWriter.write("CSeq: " + RTSPSeqNb + CRLF);
+
+			// check if request_type is equal to "SETUP" and in this case write
+			// the Transport: line advertising to the server the port used to
+			// receive the RTP packets RTP_RCV_PORT
+			// if ....
+			// otherwise, write the Session line from the RTSPid field
+			// else ....
+			if (request_type.equals("SETUP")) {
+				RTSPBufferedWriter.write("Transport: RTP/UDP; client_port= "
+						+ RTP_RCV_PORT + CRLF);
+			} else {
+				RTSPBufferedWriter.write("Session: " + RTSPid + CRLF);
+			}
+
+			RTSPBufferedWriter.flush();
+
+			// RTSPSeqNb++;
+		} catch (Exception ex) {
+			System.out.println("Exception caught: " + ex);
+			System.exit(0);
+		}
+	}
+    
+    
+ // ------------------------------------
+ 	// Parse Server Response
+ 	// ------------------------------------
+ 	private int parse_server_response() {
+ 		int reply_code = 0;
+
+ 		try {
+ 			// parse status line and extract the reply_code:
+ 			String StatusLine = RTSPBufferedReader.readLine();
+ 			// System.out.println("RTSP Client - Received from Server:");
+ 			System.out.println(StatusLine);
+
+ 			StringTokenizer tokens = new StringTokenizer(StatusLine);
+ 			tokens.nextToken(); // skip over the RTSP version
+ 			reply_code = Integer.parseInt(tokens.nextToken());
+
+ 			// if reply code is OK get and print the 2 other lines
+ 			if (reply_code == 200) {
+ 				String SeqNumLine = RTSPBufferedReader.readLine();
+ 				System.out.println(SeqNumLine);
+
+ 				String SessionLine = RTSPBufferedReader.readLine();
+ 				System.out.println(SessionLine);
+
+ 				// if state == INIT gets the Session Id from the SessionLine
+ 				tokens = new StringTokenizer(SessionLine);
+ 				tokens.nextToken(); // skip over the Session:
+ 				RTSPid = Integer.parseInt(tokens.nextToken());
+ 			}
+ 		} catch (Exception ex) {
+ 			System.out.println("Exception caught: " + ex);
+ 			System.exit(0);
+ 		}
+
+ 		return (reply_code);
+ 	}
+    
+    
 }
