@@ -2,13 +2,16 @@ package sm.client;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.InterruptedIOException;
 import java.io.OutputStreamWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.StringTokenizer;
 
 
@@ -24,7 +27,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 
 
-public class SMClientActivity extends Activity {
+public class SMClientActivity extends Activity implements Runnable {
 	
 	// Variaveis RTP:
 	// ----------------
@@ -71,7 +74,23 @@ public class SMClientActivity extends Activity {
         Bitmap bm = BitmapFactory.decodeFile(imagefile);
         image.setImageBitmap(bm);*/
         
-        buf = new byte[15000];   	
+        buf = new byte[15000]; 
+        
+        
+        
+        final Thread updateView = new Thread(this);
+        
+        try {
+			RTSPsocket = new Socket("10.0.2.2", 8087);
+			System.out.println("Conectou!!!");
+		} catch (UnknownHostException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+        
         
         
         // acao do botao setup
@@ -104,6 +123,8 @@ public class SMClientActivity extends Activity {
 							
 							// Conexao TCP com o servidor para troca de mensagens RTSP
 					    	RTSPsocket = new Socket(ServerIPAddr, RTSP_server_port);
+					    	
+					    	System.out.println("Socket criado mermao!");
 					    	
 					    	// Set input and output stream filters:
 					    	RTSPBufferedReader = new BufferedReader(new InputStreamReader(
@@ -144,6 +165,7 @@ public class SMClientActivity extends Activity {
 						}
 						catch(Exception e){
 							//erro no setup
+							System.out.println("Erro no setup: "+e.getMessage());
 						}
 						
 						dialog.cancel();
@@ -170,6 +192,32 @@ public class SMClientActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
+				
+				ImageView image = (ImageView)findViewById(R.id.imagem_video);
+				image.setVisibility(image.VISIBLE);
+				
+				if (state == READY) {
+					// incrementar o numero de sequencia RTSP
+					RTSPSeqNb++;
+
+					// Enviar mensagem de PLAY para o servidor
+					send_RTSP_request("PLAY");
+
+					// aguardando resposta
+					if (parse_server_response() != 200)
+						System.out.println("Invalid Server Response");
+					else {
+						// altera o estado do RTSP
+						state = PLAYING;
+						System.out.println("Novo estado RTP: PLAYING");
+
+						// start the timer
+						//timer.start();
+						//TODO: iniciar a Thread 
+						updateView.start();
+						
+					}
+				}// else if state != READY then do nothing
 			}
 		});
         
@@ -180,6 +228,27 @@ public class SMClientActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
+				if (state == PLAYING) {
+					// incrementar o numero de sequencia RTSP
+					RTSPSeqNb++;
+
+					// Enviar a mensagem de PAUSE para o servidor
+					send_RTSP_request("PAUSE");
+
+					// aguardando resposta
+					if (parse_server_response() != 200)
+						System.out.println("Invalid Server Response");
+					else {
+						// altera o estado do RTSP
+						state = READY;
+						System.out.println("Novo estado RTSP: Ready");
+
+						// stop the timer
+						//timer.stop();
+						//TODO: parar a thread
+						updateView.stop();
+					}
+				}// else if state != PLAYING then do nothing
 			}
 		});
         
@@ -190,6 +259,28 @@ public class SMClientActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
+				RTSPSeqNb++;
+
+				// Envia mensagem de TEARDOWN para o servidor
+				send_RTSP_request("TEARDOWN");
+
+				// aguardando resposta
+				if (parse_server_response() != 200)
+					System.out.println("Invalid Server Response");
+				else {
+					// altera o estado do RTSP
+					state = INIT;
+
+					System.out.println("Novo estado RTSP: INIT");
+
+					// stop the timer
+					//timer.stop();
+					//TODO: parar a thread
+					updateView.stop();
+
+					// exit
+					System.exit(0);
+				}
 			}
 		});        
     }
@@ -266,6 +357,55 @@ public class SMClientActivity extends Activity {
 
  		return (reply_code);
  	}
+
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		while(true){
+			// Construct a DatagramPacket to receive data from the UDP socket
+			rcvdp = new DatagramPacket(buf, buf.length);
+	
+			try {
+				// receive the DP from the socket:
+				RTPsocket.receive(rcvdp);
+	
+				// create an RTPpacket object from the DP
+				RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(),
+						rcvdp.getLength());
+	
+				// print important header fields of the RTP packet received:
+				System.out.println("Got RTP packet with SeqNum # "
+						+ rtp_packet.getsequencenumber() + " TimeStamp "
+						+ rtp_packet.gettimestamp() + " ms, of type "
+						+ rtp_packet.getpayloadtype());
+	
+				// print header bitstream:
+				rtp_packet.printheader();
+	
+				// get the payload bitstream from the RTPpacket object
+				int payload_length = rtp_packet.getpayload_length();
+				byte[] payload = new byte[payload_length];
+				rtp_packet.getpayload(payload);
+	
+				// get an Image object from the payload bitstream
+				//Toolkit toolkit = Toolkit.getDefaultToolkit();
+				//Image image = toolkit.createImage(payload, 0, payload_length);
+				// display the image as an ImageIcon object
+				//icon = new ImageIcon(image);
+				//iconLabel.setIcon(icon);
+				//TODO: converter array de byte para bitmap
+		        ImageView image = (ImageView)findViewById(R.id.imagem_video);
+		        Bitmap bm = BitmapFactory.decodeByteArray(payload, 0, payload_length);
+		        image.setImageBitmap(bm);		
+				
+			} catch (InterruptedIOException iioe) {
+				// System.out.println("Nothing to read");
+			} catch (IOException ioe) {
+				System.out.println("Exception caught: " + ioe);
+			}
+		}
+	}
     
     
 }
