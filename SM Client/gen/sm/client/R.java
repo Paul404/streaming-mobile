@@ -14,14 +14,16 @@ public final class R {
         public static final int ic_launcher=0x7f020000;
     }
     public static final class id {
-        public static final int button1=0x7f050001;
-        public static final int button2=0x7f050002;
-        public static final int button3=0x7f050003;
-        public static final int button4=0x7f050004;
-        public static final int editText1=0x7f050005;
-        public static final int editText2=0x7f050006;
-        public static final int editText3=0x7f050007;
-        public static final int imageView1=0x7f050000;
+        public static final int botao_cancelar=0x7f050009;
+        public static final int botao_confirmar=0x7f050008;
+        public static final int botao_pause=0x7f050003;
+        public static final int botao_play=0x7f050002;
+        public static final int botao_setup=0x7f050001;
+        public static final int botao_teardown=0x7f050004;
+        public static final int imagem_video=0x7f050000;
+        public static final int label_arquivo=0x7f050007;
+        public static final int label_porta=0x7f050006;
+        public static final int label_servidor=0x7f050005;
     }
     public static final class layout {
         public static final int client=0x7f030000;
