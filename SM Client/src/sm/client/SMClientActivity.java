@@ -116,7 +116,26 @@ public class SMClientActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
-				System.out.println("Agora basta configurar o botao de play");
+			}
+		});
+        
+        
+        // acao do botao de pause
+        final Button botaoPause = (Button) findViewById(R.id.botao_pause);
+        botaoPause.setOnClickListener(new View.OnClickListener() {			
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+			}
+		});
+        
+        
+     // acao do botao teardown
+        final Button botaoTeardown = (Button) findViewById(R.id.botao_teardown);
+        botaoTeardown.setOnClickListener(new View.OnClickListener() {			
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
 			}
 		});
         
